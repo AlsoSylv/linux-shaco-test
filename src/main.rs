@@ -3,6 +3,8 @@ use shaco::rest;
 
 #[tokio::main]
 async fn main() {
+    let client = rest::RESTClient::new().unwrap();
+    println!("{:?}", client.get("/lol-summoner/v1/current-summoner".to_string()).await);
     let page = json!({
         "name": "Rune Page Using Shaco!",
         "primaryStyleId": 8100,
