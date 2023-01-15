@@ -69,26 +69,28 @@ pub async fn push_runes_to_client(page: Value) -> i64 {
     let pages_endpoint = String::from("/lol-perks/v1/pages");
     match rest::RESTClient::new() {
         Ok(client) => {
-            if let Ok(response) = client.get("/lol-perks/v1/currentpage".to_string()).await {
-                let Some(id) = &response["id"].as_i64() else {
-                    panic!();
-                };
-                println!("{}", id);
-                if client
-                    .delete(format!("/lol-perks/v1/page/{}", id))
-                    .await
-                    .is_ok()
-                {
-                    if client.post(pages_endpoint, page).await.is_ok() {
-                        return 2;
+            match client.get("/lol-perks/v1/currentpage".to_string()).await {
+                Ok(response) => {
+                    println!("{:?}", &response["id"]);
+                    let Some(id) = &response["id"].as_i64() else {
+                        panic!();
+                    };
+                    println!("{}", id);
+                    if client
+                        .delete(format!("/lol-perks/v1/page/{}", id))
+                        .await
+                        .is_ok()
+                    {
+                        if client.post(pages_endpoint, page).await.is_ok() {
+                            return 2;
+                        } else {
+                            panic!()
+                        }
                     } else {
                         panic!()
                     }
-                } else {
-                    panic!()
-                }
-            } else {
-                panic!()
+                },
+                Err(err) => panic!("{}", err),
             }
         }
         Err(err) => panic!("{:?}", err)
