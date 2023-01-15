@@ -71,7 +71,7 @@ pub async fn push_runes_to_client(page: Value) -> i64 {
         Ok(client) => {
             match client.get("/lol-perks/v1/currentpage".to_string()).await {
                 Ok(response) => {
-                    println!("{:?}", &response["id"]);
+                    println!("{:?}", &response);
                     let Some(id) = &response["id"].as_i64() else {
                         panic!();
                     };
