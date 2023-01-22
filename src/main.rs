@@ -1,10 +1,10 @@
-use hyper::{client::HttpConnector, header::AUTHORIZATION, Request};
+use hyper::{client::HttpConnector, Request};
 use hyper_tls::HttpsConnector;
 use native_tls::{Certificate, TlsConnector};
 use regex::Regex;
 use sysinfo::{ProcessExt, System, SystemExt};
 
-const PEM: &[u8; 1518] = include_bytes!("../riotgames.pem");
+const PEM: &[u8; 1516] = include_bytes!("../riotgames.pem");
 
 #[cfg(target_os = "windows")]
 const TARGET_PROCESS: &str = "LeagueClientUx.exe";
@@ -49,6 +49,7 @@ async fn main() {
     let mut http = HttpConnector::new();
     http.enforce_http(false);
     let https = HttpsConnector::from((http, tokio_tls));
+    println!("{:?}", https);
     let client = hyper::Client::builder().build::<_, hyper::Body>(https);
     let uri = format!(
         "https://127.0.0.1:{}/lol-summoner/v1/current-summoner",
@@ -60,14 +61,37 @@ async fn main() {
         .method("GET")
         .uri(uri)
         .header(
-            AUTHORIZATION,
+            "Authorization",
             format!("Basic {}", encode(password.unwrap())),
         )
         .body(hyper::Body::empty())
         .unwrap();
     println!("{:?}", req);
     let x = client.request(req).await;
-    println!("{}", x.unwrap().status())
+    println!("{}", x.unwrap().status());
+
+    let rew_cert = reqwest::Certificate::from_pem(PEM).unwrap();
+    let mut headers = reqwest::header::HeaderMap::new();
+    headers.insert(
+        "Authorization",
+        reqwest::header::HeaderValue::from_str(&format!("Basic {}", encode(password.unwrap())))
+            .unwrap(),
+    );
+
+    let rew_client = reqwest::ClientBuilder::new()
+        .add_root_certificate(rew_cert)
+        .default_headers(headers)
+        .build();
+
+    let a = rew_client
+        .unwrap()
+        .get(format!(
+            "https://127.0.0.1:{}/lol-summoner/v1/current-summoner",
+            port.unwrap()
+        ))
+        .send()
+        .await;
+    println!("{:?}", a);
 }
 
 pub trait Alphabet {
